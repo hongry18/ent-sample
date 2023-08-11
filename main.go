@@ -12,17 +12,17 @@ import (
 )
 
 func main() {
-	client, err := ent.Open("postgres", "host=127.0.0.1 port=5432 user=test dbname=test password=test sslmode=disable")
+	client, err := ent.Open("postgres", "host=127.0.0.1 port=5432 user=test dbname=test password=test sslmode=disable", []ent.Option{
+		ent.Debug(),
+	}...)
 	if err != nil {
 		log.Fatalf("failed opening connection to postgres: %v", err)
 	}
 	defer client.Close()
-	// Run the auto migration tool.
-	if err := client.Schema.Create(context.Background()); err != nil {
-		log.Fatalf("failed creating schema resources: %v", err)
-	}
-
 	ctx := context.TODO()
+
+	// GenerateSchema(ctx, client)
+
 	ctx = context.WithValue(ctx, "key", "val")
 	createUser(ctx, client)
 	user, err := getUser(ctx, client)
@@ -31,6 +31,13 @@ func main() {
 	}
 	fmt.Println(user)
 	fmt.Println(user.Edges.UserInfos)
+}
+
+func GenerateSchema(ctx context.Context, client *ent.Client) {
+	// Run the auto migration tool.
+	if err := client.Schema.Create(context.Background()); err != nil {
+		log.Fatalf("failed creating schema resources: %v", err)
+	}
 }
 
 func createUser(ctx context.Context, client *ent.Client) (*ent.User, error) {
