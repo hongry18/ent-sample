@@ -8,13 +8,20 @@ import (
 	"ent_sample/ent"
 	"ent_sample/ent/user"
 
-	_ "github.com/lib/pq"
+	entsql "entgo.io/ent/dialect/sql"
+	"go.elastic.co/apm/module/apmsql/v2"
+	_ "go.elastic.co/apm/module/apmsql/v2/pq"
 )
 
 func main() {
-	client, err := ent.Open("postgres", "host=127.0.0.1 port=5432 user=test dbname=test password=test sslmode=disable", []ent.Option{
-		ent.Debug(),
-	}...)
+	db, err := apmsql.Open("postgres", "host=127.0.0.1 port=5432 user=test dbname=test password=test sslmode=disable")
+
+	// opts := []ent.Option{
+	// 	ent.Debug(),
+	// }
+	drv := entsql.OpenDB("postgresql", db)
+	client := ent.NewClient(ent.Driver(drv))
+
 	if err != nil {
 		log.Fatalf("failed opening connection to postgres: %v", err)
 	}
