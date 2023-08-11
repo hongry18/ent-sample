@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"ent_sample/ent/predicate"
+	"ent_sample/ent/user"
 	"ent_sample/ent/userinfo"
 	"fmt"
 	"math"
@@ -21,6 +22,7 @@ type UserInfoQuery struct {
 	order      []userinfo.OrderOption
 	inters     []Interceptor
 	predicates []predicate.UserInfo
+	withUsers  *UserQuery
 	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -56,6 +58,28 @@ func (uiq *UserInfoQuery) Unique(unique bool) *UserInfoQuery {
 func (uiq *UserInfoQuery) Order(o ...userinfo.OrderOption) *UserInfoQuery {
 	uiq.order = append(uiq.order, o...)
 	return uiq
+}
+
+// QueryUsers chains the current query on the "users" edge.
+func (uiq *UserInfoQuery) QueryUsers() *UserQuery {
+	query := (&UserClient{config: uiq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uiq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uiq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userinfo.Table, userinfo.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, userinfo.UsersTable, userinfo.UsersColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uiq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first UserInfo entity from the query.
@@ -250,14 +274,38 @@ func (uiq *UserInfoQuery) Clone() *UserInfoQuery {
 		order:      append([]userinfo.OrderOption{}, uiq.order...),
 		inters:     append([]Interceptor{}, uiq.inters...),
 		predicates: append([]predicate.UserInfo{}, uiq.predicates...),
+		withUsers:  uiq.withUsers.Clone(),
 		// clone intermediate query.
 		sql:  uiq.sql.Clone(),
 		path: uiq.path,
 	}
 }
 
+// WithUsers tells the query-builder to eager-load the nodes that are connected to
+// the "users" edge. The optional arguments are used to configure the query builder of the edge.
+func (uiq *UserInfoQuery) WithUsers(opts ...func(*UserQuery)) *UserInfoQuery {
+	query := (&UserClient{config: uiq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uiq.withUsers = query
+	return uiq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
+//
+// Example:
+//
+//	var v []struct {
+//		Etc string `json:"etc,omitempty"`
+//		Count int `json:"count,omitempty"`
+//	}
+//
+//	client.UserInfo.Query().
+//		GroupBy(userinfo.FieldEtc).
+//		Aggregate(ent.Count()).
+//		Scan(ctx, &v)
 func (uiq *UserInfoQuery) GroupBy(field string, fields ...string) *UserInfoGroupBy {
 	uiq.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &UserInfoGroupBy{build: uiq}
@@ -269,6 +317,16 @@ func (uiq *UserInfoQuery) GroupBy(field string, fields ...string) *UserInfoGroup
 
 // Select allows the selection one or more fields/columns for the given query,
 // instead of selecting all fields in the entity.
+//
+// Example:
+//
+//	var v []struct {
+//		Etc string `json:"etc,omitempty"`
+//	}
+//
+//	client.UserInfo.Query().
+//		Select(userinfo.FieldEtc).
+//		Scan(ctx, &v)
 func (uiq *UserInfoQuery) Select(fields ...string) *UserInfoSelect {
 	uiq.ctx.Fields = append(uiq.ctx.Fields, fields...)
 	sbuild := &UserInfoSelect{UserInfoQuery: uiq}
@@ -310,10 +368,16 @@ func (uiq *UserInfoQuery) prepareQuery(ctx context.Context) error {
 
 func (uiq *UserInfoQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*UserInfo, error) {
 	var (
-		nodes   = []*UserInfo{}
-		withFKs = uiq.withFKs
-		_spec   = uiq.querySpec()
+		nodes       = []*UserInfo{}
+		withFKs     = uiq.withFKs
+		_spec       = uiq.querySpec()
+		loadedTypes = [1]bool{
+			uiq.withUsers != nil,
+		}
 	)
+	if uiq.withUsers != nil {
+		withFKs = true
+	}
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, userinfo.ForeignKeys...)
 	}
@@ -323,6 +387,7 @@ func (uiq *UserInfoQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Us
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &UserInfo{config: uiq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -334,7 +399,46 @@ func (uiq *UserInfoQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Us
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := uiq.withUsers; query != nil {
+		if err := uiq.loadUsers(ctx, query, nodes, nil,
+			func(n *UserInfo, e *User) { n.Edges.Users = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (uiq *UserInfoQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []*UserInfo, init func(*UserInfo), assign func(*UserInfo, *User)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*UserInfo)
+	for i := range nodes {
+		if nodes[i].user_user_infos == nil {
+			continue
+		}
+		fk := *nodes[i].user_user_infos
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "user_user_infos" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (uiq *UserInfoQuery) sqlCount(ctx context.Context) (int, error) {

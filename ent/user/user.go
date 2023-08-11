@@ -24,8 +24,8 @@ const (
 	FieldDeletedAt = "deleted_at"
 	// EdgePosts holds the string denoting the posts edge name in mutations.
 	EdgePosts = "posts"
-	// EdgeUserInfo holds the string denoting the user_info edge name in mutations.
-	EdgeUserInfo = "user_info"
+	// EdgeUserInfos holds the string denoting the user_infos edge name in mutations.
+	EdgeUserInfos = "user_infos"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// PostsTable is the table that holds the posts relation/edge. The primary key declared below.
@@ -33,13 +33,13 @@ const (
 	// PostsInverseTable is the table name for the Post entity.
 	// It exists in this package in order to avoid circular dependency with the "post" package.
 	PostsInverseTable = "posts"
-	// UserInfoTable is the table that holds the user_info relation/edge.
-	UserInfoTable = "user_infos"
-	// UserInfoInverseTable is the table name for the UserInfo entity.
+	// UserInfosTable is the table that holds the user_infos relation/edge.
+	UserInfosTable = "user_infos"
+	// UserInfosInverseTable is the table name for the UserInfo entity.
 	// It exists in this package in order to avoid circular dependency with the "userinfo" package.
-	UserInfoInverseTable = "user_infos"
-	// UserInfoColumn is the table column denoting the user_info relation/edge.
-	UserInfoColumn = "user_user_info"
+	UserInfosInverseTable = "user_infos"
+	// UserInfosColumn is the table column denoting the user_infos relation/edge.
+	UserInfosColumn = "user_user_infos"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -122,17 +122,17 @@ func ByPosts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByUserInfoCount orders the results by user_info count.
-func ByUserInfoCount(opts ...sql.OrderTermOption) OrderOption {
+// ByUserInfosCount orders the results by user_infos count.
+func ByUserInfosCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newUserInfoStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newUserInfosStep(), opts...)
 	}
 }
 
-// ByUserInfo orders the results by user_info terms.
-func ByUserInfo(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByUserInfos orders the results by user_infos terms.
+func ByUserInfos(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newUserInfoStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newUserInfosStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newPostsStep() *sqlgraph.Step {
@@ -142,10 +142,10 @@ func newPostsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2M, false, PostsTable, PostsPrimaryKey...),
 	)
 }
-func newUserInfoStep() *sqlgraph.Step {
+func newUserInfosStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(UserInfoInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, UserInfoTable, UserInfoColumn),
+		sqlgraph.To(UserInfosInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, UserInfosTable, UserInfosColumn),
 	)
 }

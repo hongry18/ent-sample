@@ -6,6 +6,7 @@ import (
 	"ent_sample/ent/post"
 	"ent_sample/ent/schema"
 	"ent_sample/ent/user"
+	"ent_sample/ent/userinfo"
 	"time"
 )
 
@@ -49,4 +50,10 @@ func init() {
 	userDescDeletedAt := userFields[3].Descriptor()
 	// user.DefaultDeletedAt holds the default value on creation for the deleted_at field.
 	user.DefaultDeletedAt = userDescDeletedAt.Default.(int64)
+	userinfoFields := schema.UserInfo{}.Fields()
+	_ = userinfoFields
+	// userinfoDescEtc is the schema descriptor for etc field.
+	userinfoDescEtc := userinfoFields[0].Descriptor()
+	// userinfo.DefaultEtc holds the default value on creation for the etc field.
+	userinfo.DefaultEtc = userinfoDescEtc.Default.(string)
 }

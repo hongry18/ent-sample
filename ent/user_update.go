@@ -100,14 +100,14 @@ func (uu *UserUpdate) AddPosts(p ...*Post) *UserUpdate {
 	return uu.AddPostIDs(ids...)
 }
 
-// AddUserInfoIDs adds the "user_info" edge to the UserInfo entity by IDs.
+// AddUserInfoIDs adds the "user_infos" edge to the UserInfo entity by IDs.
 func (uu *UserUpdate) AddUserInfoIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddUserInfoIDs(ids...)
 	return uu
 }
 
-// AddUserInfo adds the "user_info" edges to the UserInfo entity.
-func (uu *UserUpdate) AddUserInfo(u ...*UserInfo) *UserUpdate {
+// AddUserInfos adds the "user_infos" edges to the UserInfo entity.
+func (uu *UserUpdate) AddUserInfos(u ...*UserInfo) *UserUpdate {
 	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
@@ -141,20 +141,20 @@ func (uu *UserUpdate) RemovePosts(p ...*Post) *UserUpdate {
 	return uu.RemovePostIDs(ids...)
 }
 
-// ClearUserInfo clears all "user_info" edges to the UserInfo entity.
-func (uu *UserUpdate) ClearUserInfo() *UserUpdate {
-	uu.mutation.ClearUserInfo()
+// ClearUserInfos clears all "user_infos" edges to the UserInfo entity.
+func (uu *UserUpdate) ClearUserInfos() *UserUpdate {
+	uu.mutation.ClearUserInfos()
 	return uu
 }
 
-// RemoveUserInfoIDs removes the "user_info" edge to UserInfo entities by IDs.
+// RemoveUserInfoIDs removes the "user_infos" edge to UserInfo entities by IDs.
 func (uu *UserUpdate) RemoveUserInfoIDs(ids ...int) *UserUpdate {
 	uu.mutation.RemoveUserInfoIDs(ids...)
 	return uu
 }
 
-// RemoveUserInfo removes "user_info" edges to UserInfo entities.
-func (uu *UserUpdate) RemoveUserInfo(u ...*UserInfo) *UserUpdate {
+// RemoveUserInfos removes "user_infos" edges to UserInfo entities.
+func (uu *UserUpdate) RemoveUserInfos(u ...*UserInfo) *UserUpdate {
 	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
@@ -267,12 +267,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uu.mutation.UserInfoCleared() {
+	if uu.mutation.UserInfosCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.UserInfoTable,
-			Columns: []string{user.UserInfoColumn},
+			Table:   user.UserInfosTable,
+			Columns: []string{user.UserInfosColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userinfo.FieldID, field.TypeInt),
@@ -280,12 +280,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.RemovedUserInfoIDs(); len(nodes) > 0 && !uu.mutation.UserInfoCleared() {
+	if nodes := uu.mutation.RemovedUserInfosIDs(); len(nodes) > 0 && !uu.mutation.UserInfosCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.UserInfoTable,
-			Columns: []string{user.UserInfoColumn},
+			Table:   user.UserInfosTable,
+			Columns: []string{user.UserInfosColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userinfo.FieldID, field.TypeInt),
@@ -296,12 +296,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.UserInfoIDs(); len(nodes) > 0 {
+	if nodes := uu.mutation.UserInfosIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.UserInfoTable,
-			Columns: []string{user.UserInfoColumn},
+			Table:   user.UserInfosTable,
+			Columns: []string{user.UserInfosColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userinfo.FieldID, field.TypeInt),
@@ -402,14 +402,14 @@ func (uuo *UserUpdateOne) AddPosts(p ...*Post) *UserUpdateOne {
 	return uuo.AddPostIDs(ids...)
 }
 
-// AddUserInfoIDs adds the "user_info" edge to the UserInfo entity by IDs.
+// AddUserInfoIDs adds the "user_infos" edge to the UserInfo entity by IDs.
 func (uuo *UserUpdateOne) AddUserInfoIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.AddUserInfoIDs(ids...)
 	return uuo
 }
 
-// AddUserInfo adds the "user_info" edges to the UserInfo entity.
-func (uuo *UserUpdateOne) AddUserInfo(u ...*UserInfo) *UserUpdateOne {
+// AddUserInfos adds the "user_infos" edges to the UserInfo entity.
+func (uuo *UserUpdateOne) AddUserInfos(u ...*UserInfo) *UserUpdateOne {
 	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
@@ -443,20 +443,20 @@ func (uuo *UserUpdateOne) RemovePosts(p ...*Post) *UserUpdateOne {
 	return uuo.RemovePostIDs(ids...)
 }
 
-// ClearUserInfo clears all "user_info" edges to the UserInfo entity.
-func (uuo *UserUpdateOne) ClearUserInfo() *UserUpdateOne {
-	uuo.mutation.ClearUserInfo()
+// ClearUserInfos clears all "user_infos" edges to the UserInfo entity.
+func (uuo *UserUpdateOne) ClearUserInfos() *UserUpdateOne {
+	uuo.mutation.ClearUserInfos()
 	return uuo
 }
 
-// RemoveUserInfoIDs removes the "user_info" edge to UserInfo entities by IDs.
+// RemoveUserInfoIDs removes the "user_infos" edge to UserInfo entities by IDs.
 func (uuo *UserUpdateOne) RemoveUserInfoIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.RemoveUserInfoIDs(ids...)
 	return uuo
 }
 
-// RemoveUserInfo removes "user_info" edges to UserInfo entities.
-func (uuo *UserUpdateOne) RemoveUserInfo(u ...*UserInfo) *UserUpdateOne {
+// RemoveUserInfos removes "user_infos" edges to UserInfo entities.
+func (uuo *UserUpdateOne) RemoveUserInfos(u ...*UserInfo) *UserUpdateOne {
 	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
@@ -599,12 +599,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uuo.mutation.UserInfoCleared() {
+	if uuo.mutation.UserInfosCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.UserInfoTable,
-			Columns: []string{user.UserInfoColumn},
+			Table:   user.UserInfosTable,
+			Columns: []string{user.UserInfosColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userinfo.FieldID, field.TypeInt),
@@ -612,12 +612,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.RemovedUserInfoIDs(); len(nodes) > 0 && !uuo.mutation.UserInfoCleared() {
+	if nodes := uuo.mutation.RemovedUserInfosIDs(); len(nodes) > 0 && !uuo.mutation.UserInfosCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.UserInfoTable,
-			Columns: []string{user.UserInfoColumn},
+			Table:   user.UserInfosTable,
+			Columns: []string{user.UserInfosColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userinfo.FieldID, field.TypeInt),
@@ -628,12 +628,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.UserInfoIDs(); len(nodes) > 0 {
+	if nodes := uuo.mutation.UserInfosIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.UserInfoTable,
-			Columns: []string{user.UserInfoColumn},
+			Table:   user.UserInfosTable,
+			Columns: []string{user.UserInfosColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userinfo.FieldID, field.TypeInt),

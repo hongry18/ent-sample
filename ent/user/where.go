@@ -283,21 +283,21 @@ func HasPostsWith(preds ...predicate.Post) predicate.User {
 	})
 }
 
-// HasUserInfo applies the HasEdge predicate on the "user_info" edge.
-func HasUserInfo() predicate.User {
+// HasUserInfos applies the HasEdge predicate on the "user_infos" edge.
+func HasUserInfos() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, UserInfoTable, UserInfoColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, UserInfosTable, UserInfosColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasUserInfoWith applies the HasEdge predicate on the "user_info" edge with a given conditions (other predicates).
-func HasUserInfoWith(preds ...predicate.UserInfo) predicate.User {
+// HasUserInfosWith applies the HasEdge predicate on the "user_infos" edge with a given conditions (other predicates).
+func HasUserInfosWith(preds ...predicate.UserInfo) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		step := newUserInfoStep()
+		step := newUserInfosStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -4,6 +4,7 @@ package userinfo
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -11,19 +12,31 @@ const (
 	Label = "user_info"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldEtc holds the string denoting the etc field in the database.
+	FieldEtc = "etc"
+	// EdgeUsers holds the string denoting the users edge name in mutations.
+	EdgeUsers = "users"
 	// Table holds the table name of the userinfo in the database.
 	Table = "user_infos"
+	// UsersTable is the table that holds the users relation/edge.
+	UsersTable = "user_infos"
+	// UsersInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	UsersInverseTable = "users"
+	// UsersColumn is the table column denoting the users relation/edge.
+	UsersColumn = "user_user_infos"
 )
 
 // Columns holds all SQL columns for userinfo fields.
 var Columns = []string{
 	FieldID,
+	FieldEtc,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "user_infos"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"user_user_info",
+	"user_user_infos",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -41,10 +54,34 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+var (
+	// DefaultEtc holds the default value on creation for the "etc" field.
+	DefaultEtc string
+)
+
 // OrderOption defines the ordering options for the UserInfo queries.
 type OrderOption func(*sql.Selector)
 
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByEtc orders the results by the etc field.
+func ByEtc(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEtc, opts...).ToFunc()
+}
+
+// ByUsersField orders the results by users field.
+func ByUsersField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newUsersStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newUsersStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(UsersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, UsersTable, UsersColumn),
+	)
 }

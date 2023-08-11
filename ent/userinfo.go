@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"ent_sample/ent/user"
 	"ent_sample/ent/userinfo"
 	"fmt"
 	"strings"
@@ -13,11 +14,38 @@ import (
 
 // UserInfo is the model entity for the UserInfo schema.
 type UserInfo struct {
-	config
+	config `json:"-"`
 	// ID of the ent.
-	ID             int `json:"id,omitempty"`
-	user_user_info *int
-	selectValues   sql.SelectValues
+	ID int `json:"id,omitempty"`
+	// Etc holds the value of the "etc" field.
+	Etc string `json:"etc,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the UserInfoQuery when eager-loading is set.
+	Edges           UserInfoEdges `json:"edges"`
+	user_user_infos *int
+	selectValues    sql.SelectValues
+}
+
+// UserInfoEdges holds the relations/edges for other nodes in the graph.
+type UserInfoEdges struct {
+	// Users holds the value of the users edge.
+	Users *User `json:"users,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// UsersOrErr returns the Users value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e UserInfoEdges) UsersOrErr() (*User, error) {
+	if e.loadedTypes[0] {
+		if e.Users == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: user.Label}
+		}
+		return e.Users, nil
+	}
+	return nil, &NotLoadedError{edge: "users"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -27,7 +55,9 @@ func (*UserInfo) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case userinfo.FieldID:
 			values[i] = new(sql.NullInt64)
-		case userinfo.ForeignKeys[0]: // user_user_info
+		case userinfo.FieldEtc:
+			values[i] = new(sql.NullString)
+		case userinfo.ForeignKeys[0]: // user_user_infos
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -50,12 +80,18 @@ func (ui *UserInfo) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			ui.ID = int(value.Int64)
+		case userinfo.FieldEtc:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field etc", values[i])
+			} else if value.Valid {
+				ui.Etc = value.String
+			}
 		case userinfo.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field user_user_info", value)
+				return fmt.Errorf("unexpected type %T for edge-field user_user_infos", value)
 			} else if value.Valid {
-				ui.user_user_info = new(int)
-				*ui.user_user_info = int(value.Int64)
+				ui.user_user_infos = new(int)
+				*ui.user_user_infos = int(value.Int64)
 			}
 		default:
 			ui.selectValues.Set(columns[i], values[i])
@@ -68,6 +104,11 @@ func (ui *UserInfo) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (ui *UserInfo) Value(name string) (ent.Value, error) {
 	return ui.selectValues.Get(name)
+}
+
+// QueryUsers queries the "users" edge of the UserInfo entity.
+func (ui *UserInfo) QueryUsers() *UserQuery {
+	return NewUserInfoClient(ui.config).QueryUsers(ui)
 }
 
 // Update returns a builder for updating this UserInfo.
@@ -92,7 +133,9 @@ func (ui *UserInfo) Unwrap() *UserInfo {
 func (ui *UserInfo) String() string {
 	var builder strings.Builder
 	builder.WriteString("UserInfo(")
-	builder.WriteString(fmt.Sprintf("id=%v", ui.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", ui.ID))
+	builder.WriteString("etc=")
+	builder.WriteString(ui.Etc)
 	builder.WriteByte(')')
 	return builder.String()
 }

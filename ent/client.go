@@ -452,15 +452,15 @@ func (c *UserClient) QueryPosts(u *User) *PostQuery {
 	return query
 }
 
-// QueryUserInfo queries the user_info edge of a User.
-func (c *UserClient) QueryUserInfo(u *User) *UserInfoQuery {
+// QueryUserInfos queries the user_infos edge of a User.
+func (c *UserClient) QueryUserInfos(u *User) *UserInfoQuery {
 	query := (&UserInfoClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := u.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(userinfo.Table, userinfo.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.UserInfoTable, user.UserInfoColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.UserInfosTable, user.UserInfosColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil
@@ -584,6 +584,22 @@ func (c *UserInfoClient) GetX(ctx context.Context, id int) *UserInfo {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryUsers queries the users edge of a UserInfo.
+func (c *UserInfoClient) QueryUsers(ui *UserInfo) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ui.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userinfo.Table, userinfo.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, userinfo.UsersTable, userinfo.UsersColumn),
+		)
+		fromV = sqlgraph.Neighbors(ui.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.

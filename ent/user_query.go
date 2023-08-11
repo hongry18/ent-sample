@@ -20,12 +20,12 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx          *QueryContext
-	order        []user.OrderOption
-	inters       []Interceptor
-	predicates   []predicate.User
-	withPosts    *PostQuery
-	withUserInfo *UserInfoQuery
+	ctx           *QueryContext
+	order         []user.OrderOption
+	inters        []Interceptor
+	predicates    []predicate.User
+	withPosts     *PostQuery
+	withUserInfos *UserInfoQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -84,8 +84,8 @@ func (uq *UserQuery) QueryPosts() *PostQuery {
 	return query
 }
 
-// QueryUserInfo chains the current query on the "user_info" edge.
-func (uq *UserQuery) QueryUserInfo() *UserInfoQuery {
+// QueryUserInfos chains the current query on the "user_infos" edge.
+func (uq *UserQuery) QueryUserInfos() *UserInfoQuery {
 	query := (&UserInfoClient{config: uq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := uq.prepareQuery(ctx); err != nil {
@@ -98,7 +98,7 @@ func (uq *UserQuery) QueryUserInfo() *UserInfoQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(userinfo.Table, userinfo.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.UserInfoTable, user.UserInfoColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.UserInfosTable, user.UserInfosColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -293,13 +293,13 @@ func (uq *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:       uq.config,
-		ctx:          uq.ctx.Clone(),
-		order:        append([]user.OrderOption{}, uq.order...),
-		inters:       append([]Interceptor{}, uq.inters...),
-		predicates:   append([]predicate.User{}, uq.predicates...),
-		withPosts:    uq.withPosts.Clone(),
-		withUserInfo: uq.withUserInfo.Clone(),
+		config:        uq.config,
+		ctx:           uq.ctx.Clone(),
+		order:         append([]user.OrderOption{}, uq.order...),
+		inters:        append([]Interceptor{}, uq.inters...),
+		predicates:    append([]predicate.User{}, uq.predicates...),
+		withPosts:     uq.withPosts.Clone(),
+		withUserInfos: uq.withUserInfos.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
@@ -317,14 +317,14 @@ func (uq *UserQuery) WithPosts(opts ...func(*PostQuery)) *UserQuery {
 	return uq
 }
 
-// WithUserInfo tells the query-builder to eager-load the nodes that are connected to
-// the "user_info" edge. The optional arguments are used to configure the query builder of the edge.
-func (uq *UserQuery) WithUserInfo(opts ...func(*UserInfoQuery)) *UserQuery {
+// WithUserInfos tells the query-builder to eager-load the nodes that are connected to
+// the "user_infos" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithUserInfos(opts ...func(*UserInfoQuery)) *UserQuery {
 	query := (&UserInfoClient{config: uq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	uq.withUserInfo = query
+	uq.withUserInfos = query
 	return uq
 }
 
@@ -408,7 +408,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		_spec       = uq.querySpec()
 		loadedTypes = [2]bool{
 			uq.withPosts != nil,
-			uq.withUserInfo != nil,
+			uq.withUserInfos != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -436,10 +436,10 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			return nil, err
 		}
 	}
-	if query := uq.withUserInfo; query != nil {
-		if err := uq.loadUserInfo(ctx, query, nodes,
-			func(n *User) { n.Edges.UserInfo = []*UserInfo{} },
-			func(n *User, e *UserInfo) { n.Edges.UserInfo = append(n.Edges.UserInfo, e) }); err != nil {
+	if query := uq.withUserInfos; query != nil {
+		if err := uq.loadUserInfos(ctx, query, nodes,
+			func(n *User) { n.Edges.UserInfos = []*UserInfo{} },
+			func(n *User, e *UserInfo) { n.Edges.UserInfos = append(n.Edges.UserInfos, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -507,7 +507,7 @@ func (uq *UserQuery) loadPosts(ctx context.Context, query *PostQuery, nodes []*U
 	}
 	return nil
 }
-func (uq *UserQuery) loadUserInfo(ctx context.Context, query *UserInfoQuery, nodes []*User, init func(*User), assign func(*User, *UserInfo)) error {
+func (uq *UserQuery) loadUserInfos(ctx context.Context, query *UserInfoQuery, nodes []*User, init func(*User), assign func(*User, *UserInfo)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*User)
 	for i := range nodes {
@@ -519,20 +519,20 @@ func (uq *UserQuery) loadUserInfo(ctx context.Context, query *UserInfoQuery, nod
 	}
 	query.withFKs = true
 	query.Where(predicate.UserInfo(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.UserInfoColumn), fks...))
+		s.Where(sql.InValues(s.C(user.UserInfosColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.user_user_info
+		fk := n.user_user_infos
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_user_info" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "user_user_infos" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_user_info" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "user_user_infos" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

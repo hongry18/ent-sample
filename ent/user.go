@@ -35,8 +35,8 @@ type User struct {
 type UserEdges struct {
 	// Posts holds the value of the posts edge.
 	Posts []*Post `json:"posts,omitempty"`
-	// UserInfo holds the value of the user_info edge.
-	UserInfo []*UserInfo `json:"user_info,omitempty"`
+	// UserInfos holds the value of the user_infos edge.
+	UserInfos []*UserInfo `json:"user_infos,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
@@ -51,13 +51,13 @@ func (e UserEdges) PostsOrErr() ([]*Post, error) {
 	return nil, &NotLoadedError{edge: "posts"}
 }
 
-// UserInfoOrErr returns the UserInfo value or an error if the edge
+// UserInfosOrErr returns the UserInfos value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserEdges) UserInfoOrErr() ([]*UserInfo, error) {
+func (e UserEdges) UserInfosOrErr() ([]*UserInfo, error) {
 	if e.loadedTypes[1] {
-		return e.UserInfo, nil
+		return e.UserInfos, nil
 	}
-	return nil, &NotLoadedError{edge: "user_info"}
+	return nil, &NotLoadedError{edge: "user_infos"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -134,9 +134,9 @@ func (u *User) QueryPosts() *PostQuery {
 	return NewUserClient(u.config).QueryPosts(u)
 }
 
-// QueryUserInfo queries the "user_info" edge of the User entity.
-func (u *User) QueryUserInfo() *UserInfoQuery {
-	return NewUserClient(u.config).QueryUserInfo(u)
+// QueryUserInfos queries the "user_infos" edge of the User entity.
+func (u *User) QueryUserInfos() *UserInfoQuery {
+	return NewUserClient(u.config).QueryUserInfos(u)
 }
 
 // Update returns a builder for updating this User.

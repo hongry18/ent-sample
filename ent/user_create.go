@@ -93,14 +93,14 @@ func (uc *UserCreate) AddPosts(p ...*Post) *UserCreate {
 	return uc.AddPostIDs(ids...)
 }
 
-// AddUserInfoIDs adds the "user_info" edge to the UserInfo entity by IDs.
+// AddUserInfoIDs adds the "user_infos" edge to the UserInfo entity by IDs.
 func (uc *UserCreate) AddUserInfoIDs(ids ...int) *UserCreate {
 	uc.mutation.AddUserInfoIDs(ids...)
 	return uc
 }
 
-// AddUserInfo adds the "user_info" edges to the UserInfo entity.
-func (uc *UserCreate) AddUserInfo(u ...*UserInfo) *UserCreate {
+// AddUserInfos adds the "user_infos" edges to the UserInfo entity.
+func (uc *UserCreate) AddUserInfos(u ...*UserInfo) *UserCreate {
 	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
@@ -233,12 +233,12 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := uc.mutation.UserInfoIDs(); len(nodes) > 0 {
+	if nodes := uc.mutation.UserInfosIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.UserInfoTable,
-			Columns: []string{user.UserInfoColumn},
+			Table:   user.UserInfosTable,
+			Columns: []string{user.UserInfosColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userinfo.FieldID, field.TypeInt),

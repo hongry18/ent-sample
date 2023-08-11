@@ -6,6 +6,7 @@ import (
 	"ent_sample/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
@@ -51,6 +52,99 @@ func IDLT(id int) predicate.UserInfo {
 // IDLTE applies the LTE predicate on the ID field.
 func IDLTE(id int) predicate.UserInfo {
 	return predicate.UserInfo(sql.FieldLTE(FieldID, id))
+}
+
+// Etc applies equality check predicate on the "etc" field. It's identical to EtcEQ.
+func Etc(v string) predicate.UserInfo {
+	return predicate.UserInfo(sql.FieldEQ(FieldEtc, v))
+}
+
+// EtcEQ applies the EQ predicate on the "etc" field.
+func EtcEQ(v string) predicate.UserInfo {
+	return predicate.UserInfo(sql.FieldEQ(FieldEtc, v))
+}
+
+// EtcNEQ applies the NEQ predicate on the "etc" field.
+func EtcNEQ(v string) predicate.UserInfo {
+	return predicate.UserInfo(sql.FieldNEQ(FieldEtc, v))
+}
+
+// EtcIn applies the In predicate on the "etc" field.
+func EtcIn(vs ...string) predicate.UserInfo {
+	return predicate.UserInfo(sql.FieldIn(FieldEtc, vs...))
+}
+
+// EtcNotIn applies the NotIn predicate on the "etc" field.
+func EtcNotIn(vs ...string) predicate.UserInfo {
+	return predicate.UserInfo(sql.FieldNotIn(FieldEtc, vs...))
+}
+
+// EtcGT applies the GT predicate on the "etc" field.
+func EtcGT(v string) predicate.UserInfo {
+	return predicate.UserInfo(sql.FieldGT(FieldEtc, v))
+}
+
+// EtcGTE applies the GTE predicate on the "etc" field.
+func EtcGTE(v string) predicate.UserInfo {
+	return predicate.UserInfo(sql.FieldGTE(FieldEtc, v))
+}
+
+// EtcLT applies the LT predicate on the "etc" field.
+func EtcLT(v string) predicate.UserInfo {
+	return predicate.UserInfo(sql.FieldLT(FieldEtc, v))
+}
+
+// EtcLTE applies the LTE predicate on the "etc" field.
+func EtcLTE(v string) predicate.UserInfo {
+	return predicate.UserInfo(sql.FieldLTE(FieldEtc, v))
+}
+
+// EtcContains applies the Contains predicate on the "etc" field.
+func EtcContains(v string) predicate.UserInfo {
+	return predicate.UserInfo(sql.FieldContains(FieldEtc, v))
+}
+
+// EtcHasPrefix applies the HasPrefix predicate on the "etc" field.
+func EtcHasPrefix(v string) predicate.UserInfo {
+	return predicate.UserInfo(sql.FieldHasPrefix(FieldEtc, v))
+}
+
+// EtcHasSuffix applies the HasSuffix predicate on the "etc" field.
+func EtcHasSuffix(v string) predicate.UserInfo {
+	return predicate.UserInfo(sql.FieldHasSuffix(FieldEtc, v))
+}
+
+// EtcEqualFold applies the EqualFold predicate on the "etc" field.
+func EtcEqualFold(v string) predicate.UserInfo {
+	return predicate.UserInfo(sql.FieldEqualFold(FieldEtc, v))
+}
+
+// EtcContainsFold applies the ContainsFold predicate on the "etc" field.
+func EtcContainsFold(v string) predicate.UserInfo {
+	return predicate.UserInfo(sql.FieldContainsFold(FieldEtc, v))
+}
+
+// HasUsers applies the HasEdge predicate on the "users" edge.
+func HasUsers() predicate.UserInfo {
+	return predicate.UserInfo(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, UsersTable, UsersColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasUsersWith applies the HasEdge predicate on the "users" edge with a given conditions (other predicates).
+func HasUsersWith(preds ...predicate.User) predicate.UserInfo {
+	return predicate.UserInfo(func(s *sql.Selector) {
+		step := newUsersStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

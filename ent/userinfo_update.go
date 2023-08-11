@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"ent_sample/ent/predicate"
+	"ent_sample/ent/user"
 	"ent_sample/ent/userinfo"
 	"errors"
 	"fmt"
@@ -27,9 +28,48 @@ func (uiu *UserInfoUpdate) Where(ps ...predicate.UserInfo) *UserInfoUpdate {
 	return uiu
 }
 
+// SetEtc sets the "etc" field.
+func (uiu *UserInfoUpdate) SetEtc(s string) *UserInfoUpdate {
+	uiu.mutation.SetEtc(s)
+	return uiu
+}
+
+// SetNillableEtc sets the "etc" field if the given value is not nil.
+func (uiu *UserInfoUpdate) SetNillableEtc(s *string) *UserInfoUpdate {
+	if s != nil {
+		uiu.SetEtc(*s)
+	}
+	return uiu
+}
+
+// SetUsersID sets the "users" edge to the User entity by ID.
+func (uiu *UserInfoUpdate) SetUsersID(id int) *UserInfoUpdate {
+	uiu.mutation.SetUsersID(id)
+	return uiu
+}
+
+// SetNillableUsersID sets the "users" edge to the User entity by ID if the given value is not nil.
+func (uiu *UserInfoUpdate) SetNillableUsersID(id *int) *UserInfoUpdate {
+	if id != nil {
+		uiu = uiu.SetUsersID(*id)
+	}
+	return uiu
+}
+
+// SetUsers sets the "users" edge to the User entity.
+func (uiu *UserInfoUpdate) SetUsers(u *User) *UserInfoUpdate {
+	return uiu.SetUsersID(u.ID)
+}
+
 // Mutation returns the UserInfoMutation object of the builder.
 func (uiu *UserInfoUpdate) Mutation() *UserInfoMutation {
 	return uiu.mutation
+}
+
+// ClearUsers clears the "users" edge to the User entity.
+func (uiu *UserInfoUpdate) ClearUsers() *UserInfoUpdate {
+	uiu.mutation.ClearUsers()
+	return uiu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -68,6 +108,38 @@ func (uiu *UserInfoUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
+	if value, ok := uiu.mutation.Etc(); ok {
+		_spec.SetField(userinfo.FieldEtc, field.TypeString, value)
+	}
+	if uiu.mutation.UsersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   userinfo.UsersTable,
+			Columns: []string{userinfo.UsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uiu.mutation.UsersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   userinfo.UsersTable,
+			Columns: []string{userinfo.UsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uiu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{userinfo.Label}
@@ -88,9 +160,48 @@ type UserInfoUpdateOne struct {
 	mutation *UserInfoMutation
 }
 
+// SetEtc sets the "etc" field.
+func (uiuo *UserInfoUpdateOne) SetEtc(s string) *UserInfoUpdateOne {
+	uiuo.mutation.SetEtc(s)
+	return uiuo
+}
+
+// SetNillableEtc sets the "etc" field if the given value is not nil.
+func (uiuo *UserInfoUpdateOne) SetNillableEtc(s *string) *UserInfoUpdateOne {
+	if s != nil {
+		uiuo.SetEtc(*s)
+	}
+	return uiuo
+}
+
+// SetUsersID sets the "users" edge to the User entity by ID.
+func (uiuo *UserInfoUpdateOne) SetUsersID(id int) *UserInfoUpdateOne {
+	uiuo.mutation.SetUsersID(id)
+	return uiuo
+}
+
+// SetNillableUsersID sets the "users" edge to the User entity by ID if the given value is not nil.
+func (uiuo *UserInfoUpdateOne) SetNillableUsersID(id *int) *UserInfoUpdateOne {
+	if id != nil {
+		uiuo = uiuo.SetUsersID(*id)
+	}
+	return uiuo
+}
+
+// SetUsers sets the "users" edge to the User entity.
+func (uiuo *UserInfoUpdateOne) SetUsers(u *User) *UserInfoUpdateOne {
+	return uiuo.SetUsersID(u.ID)
+}
+
 // Mutation returns the UserInfoMutation object of the builder.
 func (uiuo *UserInfoUpdateOne) Mutation() *UserInfoMutation {
 	return uiuo.mutation
+}
+
+// ClearUsers clears the "users" edge to the User entity.
+func (uiuo *UserInfoUpdateOne) ClearUsers() *UserInfoUpdateOne {
+	uiuo.mutation.ClearUsers()
+	return uiuo
 }
 
 // Where appends a list predicates to the UserInfoUpdate builder.
@@ -158,6 +269,38 @@ func (uiuo *UserInfoUpdateOne) sqlSave(ctx context.Context) (_node *UserInfo, er
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := uiuo.mutation.Etc(); ok {
+		_spec.SetField(userinfo.FieldEtc, field.TypeString, value)
+	}
+	if uiuo.mutation.UsersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   userinfo.UsersTable,
+			Columns: []string{userinfo.UsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uiuo.mutation.UsersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   userinfo.UsersTable,
+			Columns: []string{userinfo.UsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &UserInfo{config: uiuo.config}
 	_spec.Assign = _node.assignValues

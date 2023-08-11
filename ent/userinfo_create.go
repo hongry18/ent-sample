@@ -4,7 +4,9 @@ package ent
 
 import (
 	"context"
+	"ent_sample/ent/user"
 	"ent_sample/ent/userinfo"
+	"errors"
 	"fmt"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -18,6 +20,39 @@ type UserInfoCreate struct {
 	hooks    []Hook
 }
 
+// SetEtc sets the "etc" field.
+func (uic *UserInfoCreate) SetEtc(s string) *UserInfoCreate {
+	uic.mutation.SetEtc(s)
+	return uic
+}
+
+// SetNillableEtc sets the "etc" field if the given value is not nil.
+func (uic *UserInfoCreate) SetNillableEtc(s *string) *UserInfoCreate {
+	if s != nil {
+		uic.SetEtc(*s)
+	}
+	return uic
+}
+
+// SetUsersID sets the "users" edge to the User entity by ID.
+func (uic *UserInfoCreate) SetUsersID(id int) *UserInfoCreate {
+	uic.mutation.SetUsersID(id)
+	return uic
+}
+
+// SetNillableUsersID sets the "users" edge to the User entity by ID if the given value is not nil.
+func (uic *UserInfoCreate) SetNillableUsersID(id *int) *UserInfoCreate {
+	if id != nil {
+		uic = uic.SetUsersID(*id)
+	}
+	return uic
+}
+
+// SetUsers sets the "users" edge to the User entity.
+func (uic *UserInfoCreate) SetUsers(u *User) *UserInfoCreate {
+	return uic.SetUsersID(u.ID)
+}
+
 // Mutation returns the UserInfoMutation object of the builder.
 func (uic *UserInfoCreate) Mutation() *UserInfoMutation {
 	return uic.mutation
@@ -25,6 +60,7 @@ func (uic *UserInfoCreate) Mutation() *UserInfoMutation {
 
 // Save creates the UserInfo in the database.
 func (uic *UserInfoCreate) Save(ctx context.Context) (*UserInfo, error) {
+	uic.defaults()
 	return withHooks(ctx, uic.sqlSave, uic.mutation, uic.hooks)
 }
 
@@ -50,8 +86,19 @@ func (uic *UserInfoCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (uic *UserInfoCreate) defaults() {
+	if _, ok := uic.mutation.Etc(); !ok {
+		v := userinfo.DefaultEtc
+		uic.mutation.SetEtc(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (uic *UserInfoCreate) check() error {
+	if _, ok := uic.mutation.Etc(); !ok {
+		return &ValidationError{Name: "etc", err: errors.New(`ent: missing required field "UserInfo.etc"`)}
+	}
 	return nil
 }
 
@@ -78,6 +125,27 @@ func (uic *UserInfoCreate) createSpec() (*UserInfo, *sqlgraph.CreateSpec) {
 		_node = &UserInfo{config: uic.config}
 		_spec = sqlgraph.NewCreateSpec(userinfo.Table, sqlgraph.NewFieldSpec(userinfo.FieldID, field.TypeInt))
 	)
+	if value, ok := uic.mutation.Etc(); ok {
+		_spec.SetField(userinfo.FieldEtc, field.TypeString, value)
+		_node.Etc = value
+	}
+	if nodes := uic.mutation.UsersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   userinfo.UsersTable,
+			Columns: []string{userinfo.UsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.user_user_infos = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -95,6 +163,7 @@ func (uicb *UserInfoCreateBulk) Save(ctx context.Context) ([]*UserInfo, error) {
 	for i := range uicb.builders {
 		func(i int, root context.Context) {
 			builder := uicb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*UserInfoMutation)
 				if !ok {

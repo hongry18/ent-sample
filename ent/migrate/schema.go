@@ -38,7 +38,8 @@ var (
 	// UserInfosColumns holds the columns for the "user_infos" table.
 	UserInfosColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "user_user_info", Type: field.TypeInt, Nullable: true},
+		{Name: "etc", Type: field.TypeString, Default: ""},
+		{Name: "user_user_infos", Type: field.TypeInt, Nullable: true},
 	}
 	// UserInfosTable holds the schema information for the "user_infos" table.
 	UserInfosTable = &schema.Table{
@@ -47,8 +48,8 @@ var (
 		PrimaryKey: []*schema.Column{UserInfosColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "user_infos_users_user_info",
-				Columns:    []*schema.Column{UserInfosColumns[1]},
+				Symbol:     "user_infos_users_user_infos",
+				Columns:    []*schema.Column{UserInfosColumns[2]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
